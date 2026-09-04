@@ -14,11 +14,13 @@ dependencies = [
     "matplotlib>=3.7,<4",
     "seaborn>=0.12,<0.14",
     "scikit-learn>=1.3,<1.4",
+    "pyyaml>=6.0",
 ]
 
 [project.optional-dependencies]
 dev = [
     "pytest>=8.0",
+    "ruff>=0.6",
 ]
 
 [project.scripts]
@@ -27,3 +29,13 @@ hbb-train = "hbb_classification.train:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 110
+src = ["src", "tests", "scripts"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I"]

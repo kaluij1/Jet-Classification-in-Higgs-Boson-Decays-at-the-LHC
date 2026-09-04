@@ -108,7 +108,7 @@ def validate_file(path: Path, *, check_hash: bool = True) -> None:
             )
 
 
-def validate_schema(frame: pd.DataFrame) -> None:
+def validate_columns(frame: pd.DataFrame) -> None:
     actual = list(frame.columns)
     if actual != EXPECTED_COLUMNS:
         raise DataValidationError(
@@ -116,7 +116,23 @@ def validate_schema(frame: pd.DataFrame) -> None:
             f"Expected: {EXPECTED_COLUMNS}\n"
             f"Actual:   {actual}"
         )
-    if len(frame) != EXPECTED_N_ROWS:
+
+
+def validate_labels(frame: pd.DataFrame) -> None:
+    if not set(LABEL_COLUMNS).issubset(frame.columns):
+        raise DataValidationError(f"Frame is missing label columns {LABEL_COLUMNS}.")
+    total = frame["isSignal"] + frame["isBackground"]
+    if not (total == 1).all():
+        raise DataValidationError("isSignal and isBackground must be complementary and sum to 1.")
+    overlap = (frame["isSignal"] == 1) & (frame["isBackground"] == 1)
+    if overlap.any():
+        raise DataValidationError("isSignal and isBackground overlap on at least one row.")
+
+
+def validate_schema(frame: pd.DataFrame, *, require_expected_rows: bool = True) -> None:
+    validate_columns(frame)
+    validate_labels(frame)
+    if require_expected_rows and len(frame) != EXPECTED_N_ROWS:
         raise DataValidationError(
             f"CSV has {len(frame):,} rows; expected {EXPECTED_N_ROWS:,}."
         )
@@ -130,5 +146,12 @@ def load_raw_csv(path: str | Path, *, check_hash: bool = True) -> pd.DataFrame:
     csv_path = Path(path)
     validate_file(csv_path, check_hash=check_hash)
     frame = pd.read_csv(csv_path)
-    validate_schema(frame)
+    validate_schema(frame, require_expected_rows=True)
+    return frame
+
+
+def load_table(path: str | Path) -> pd.DataFrame:
+    """Load a schema-compatible table without size, hash, or row-count checks."""
+    frame = pd.read_csv(path)
+    validate_schema(frame, require_expected_rows=False)
     return frame

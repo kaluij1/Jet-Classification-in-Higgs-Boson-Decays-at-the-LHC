@@ -6,9 +6,11 @@ import argparse
 import json
 from pathlib import Path
 
-from hbb_classification.data import default_raw_path, load_raw_csv
+from hbb_classification.config import DEFAULT_CONFIG_PATH, load_config
+from hbb_classification.data import load_raw_csv
 from hbb_classification.experiment import run_p1_pipeline
-from hbb_classification.pipeline import RANDOM_STATE, run_notebook_pipeline
+from hbb_classification.logutil import setup_logging
+from hbb_classification.pipeline import run_notebook_pipeline
 
 
 def _print_legacy(results: dict) -> None:
@@ -112,37 +114,35 @@ def _print_p1(results: dict) -> None:
     print(f"\nSelected by validation AUC: {results['selected_by_validation_auc']}")
 
 
-def build_parser() -> argparse.ArgumentParser:
+def build_parser(argv: list[str] | None = None) -> tuple[argparse.ArgumentParser, argparse.Namespace]:
+    pre = argparse.ArgumentParser(add_help=False)
+    pre.add_argument(
+        "--config",
+        type=Path,
+        default=DEFAULT_CONFIG_PATH,
+        help="YAML config (default: configs/default.yaml)",
+    )
+    pre_args, _remaining = pre.parse_known_args(argv)
+    config = load_config(pre_args.config)
+
     parser = argparse.ArgumentParser(
-        description="Train and evaluate Hbb jet classifiers (P1 methodology by default)."
+        description="Train and evaluate Hbb jet classifiers (P1 methodology by default).",
+        parents=[pre],
     )
-    parser.add_argument(
-        "--data",
-        type=Path,
-        default=default_raw_path(),
-        help="Path to cms_Hbb.csv (default: data/raw/cms_Hbb.csv)",
-    )
-    parser.add_argument(
-        "--output",
-        type=Path,
-        default=Path("artifacts") / "metrics.json",
-        help="Where to write metrics JSON",
-    )
-    parser.add_argument(
-        "--figure-dir",
-        type=Path,
-        default=Path("artifacts") / "figures",
-        help="Directory for ROC and Punzi plots",
-    )
-    parser.add_argument("--seed", type=int, default=RANDOM_STATE)
+    parser.add_argument("--data", type=Path, default=config.data_path)
+    parser.add_argument("--output", type=Path, default=config.metrics_path)
+    parser.add_argument("--figure-dir", type=Path, default=config.figure_dir)
+    parser.add_argument("--seed", type=int, default=config.seed)
     parser.add_argument(
         "--skip-hash",
         action="store_true",
+        default=not config.check_hash,
         help="Skip the SHA-256 check (still checks size and schema)",
     )
     parser.add_argument(
         "--skip-random-forest",
         action="store_true",
+        default=config.skip_random_forest,
         help="Skip the Random Forest model (faster)",
     )
     parser.add_argument(
@@ -150,11 +150,16 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Reproduce the original notebook pipeline (P0), including known leakage",
     )
-    return parser
+    args = parser.parse_args(argv)
+    args.train_fraction = config.train_fraction
+    args.val_fraction = config.val_fraction
+    args.test_fraction = config.test_fraction
+    return parser, args
 
 
 def main(argv: list[str] | None = None) -> int:
-    args = build_parser().parse_args(argv)
+    setup_logging()
+    _parser, args = build_parser(argv)
     frame = load_raw_csv(args.data, check_hash=not args.skip_hash)
 
     if args.legacy:
@@ -172,6 +177,9 @@ def main(argv: list[str] | None = None) -> int:
             random_state=args.seed,
             figure_dir=args.figure_dir,
             skip_random_forest=args.skip_random_forest,
+            train_fraction=args.train_fraction,
+            val_fraction=args.val_fraction,
+            test_fraction=args.test_fraction,
         )
         print(f"Loaded {results['n_rows_raw']:,} rows (natural class prior)")
         _print_p1(results)

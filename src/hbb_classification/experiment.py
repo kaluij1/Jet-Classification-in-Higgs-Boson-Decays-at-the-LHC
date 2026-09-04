@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 from pathlib import Path
 from typing import Any
 
@@ -15,7 +16,15 @@ from hbb_classification.data import PHYSICS_SCORE_CANDIDATES, SENTINEL_COLUMNS, 
 from hbb_classification.metrics import best_punzi_threshold, evaluate_split, score_metrics
 from hbb_classification.models import build_model_zoo, predict_scores
 from hbb_classification.plots import save_punzi_curves, save_roc_curves
-from hbb_classification.split import make_feature_label_frames, stratified_train_val_test
+from hbb_classification.split import (
+    TEST_FRACTION,
+    TRAIN_FRACTION,
+    VAL_FRACTION,
+    make_feature_label_frames,
+    stratified_train_val_test,
+)
+
+LOGGER = logging.getLogger(__name__)
 
 
 def _json_safe(value: Any) -> Any:
@@ -128,9 +137,19 @@ def run_p1_pipeline(
     random_state: int = 42,
     figure_dir: Path | None = None,
     skip_random_forest: bool = False,
+    train_fraction: float = TRAIN_FRACTION,
+    val_fraction: float = VAL_FRACTION,
+    test_fraction: float = TEST_FRACTION,
 ) -> dict[str, Any]:
     features, labels = make_feature_label_frames(frame)
-    splits = stratified_train_val_test(features, labels, random_state=random_state)
+    splits = stratified_train_val_test(
+        features,
+        labels,
+        train_fraction=train_fraction,
+        val_fraction=val_fraction,
+        test_fraction=test_fraction,
+        random_state=random_state,
+    )
 
     physics_choice = select_physics_baseline(splits["x_val"], splits["y_val"])
     physics_feature = physics_choice["selected"]["feature"]
@@ -153,7 +172,7 @@ def run_p1_pipeline(
     chosen_thresholds = {"physics_baseline": physics_threshold["threshold"]}
 
     for name, model in zoo.items():
-        print(f"Fitting {name}...")
+        LOGGER.info("Fitting %s", name)
         model.fit(splits["x_train"], splits["y_train"])
         _, val_score = predict_scores(model, splits["x_val"])
         _, test_score = predict_scores(model, splits["x_test"])
