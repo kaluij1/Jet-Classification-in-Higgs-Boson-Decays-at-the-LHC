@@ -8,6 +8,7 @@ authors:
     email: kaluij1@stolaf.edu
     alias: kaluij1
 repository-code: https://github.com/kaluij1/Jet-Classification-in-Higgs-Boson-Decays-at-the-LHC
+license: MIT
 abstract: >-
   Reproducible H→bb̄ versus QCD jet classification on a derived high-level
   feature table extracted from CERN Open Data record 12102 (HiggsToBBNTuple).

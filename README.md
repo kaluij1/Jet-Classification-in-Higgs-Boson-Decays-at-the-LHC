@@ -2,7 +2,7 @@
 
 Binary classification of CMS-style fat jets: \(H \rightarrow b\bar{b}\) (signal) versus QCD multijet (background), using 26 high-level tracking and secondary-vertex features.
 
-The default pipeline is a leakage-controlled train / validation / test evaluation (P1). The original course notebook is archived under `reports/original/` and can still be reproduced with `--legacy`.
+The default pipeline is a leakage-controlled train / validation / test evaluation (P1). The original course notebook is archived under `reports/original/` and can still be reproduced with `--legacy`. A short model card is in [`reports/model_card.md`](reports/model_card.md).
 
 ## Results snapshot
 
@@ -62,6 +62,15 @@ python -m scripts.train --config configs/default.yaml
 
 This writes `artifacts/metrics.json` and `artifacts/figures/`. Random Forest is the slow step; skip it with `--skip-random-forest`. Seed, split fractions, and paths live in `configs/default.yaml`.
 
+Thin notebooks that **import the package** (they do not replace `scripts.train`):
+
+```bash
+jupyter notebook notebooks/01_eda.ipynb
+jupyter notebook notebooks/02_results.ipynb
+```
+
+`01_eda` needs `data/raw/cms_Hbb.csv`. `02_results` only reads `artifacts/` after a training run.
+
 To reproduce the original notebook numbers (balanced test set, known leakage):
 
 ```bash
@@ -77,13 +86,16 @@ configs/                  default seed, split, and paths
 tests/                    schema, leakage, Punzi, and smoke tests on a toy table
 data/raw/                 cms_Hbb.csv (gitignored) and data instructions
 artifacts/                metrics.json and figures from a local run
+notebooks/                EDA and results notebooks that import the package
+reports/model_card.md     intended use, leakage controls, limits
 reports/original/         course notebook and PDF, frozen
+LICENSE                   MIT (this software). Dataset licenses differ.
 .github/workflows/        CI: ruff + pytest (no 105 MB download)
 ```
 
 ## Tests
 
-CI never fetches `cms_Hbb.csv`. Tests build a 60-row table with the same columns and label rules.
+CI never fetches `cms_Hbb.csv`. Tests build a 60-row table with the same columns and label rules, and they check that the notebooks stay valid JSON.
 
 ```bash
 pip install -e ".[dev]"
@@ -115,6 +127,14 @@ pytest
 ## Original course work
 
 The submitted notebook and PDF are in [`reports/original/`](reports/original/). That analysis undersampled before splitting, fit PCA on the full balanced matrix, and chose the Punzi threshold on the test set. Use `--legacy` if you need those numbers.
+
+## License
+
+- **Code** in this repository: [MIT](LICENSE).
+- **Derived table** `cms_Hbb.csv` on Zenodo: [CC-BY-4.0](https://creativecommons.org/licenses/by/4.0/).
+- **Parent ROOT sample** (CERN Open Data record 12102): [CC0-1.0](https://creativecommons.org/publicdomain/zero/1.0/).
+
+CMS and CERN do not endorse this derivative work.
 
 ## Citation
 
