@@ -1,0 +1,19 @@
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+.ipynb_checkpoints/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.DS_Store
+Thumbs.db
+
+# Local dataset and run outputs (do not commit)
+data/raw/*.csv
+data/raw/*.xlsx
+artifacts/*
+!artifacts/.gitkeep
