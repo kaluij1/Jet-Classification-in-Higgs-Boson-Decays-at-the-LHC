@@ -32,16 +32,15 @@ ROC and Punzi curves from this run are written to `artifacts/figures/`.
 | Signal / background | 79,310 / 146,558 |
 | Size | 105,219,354 bytes |
 | SHA-256 | `79455ebf15da90a9a28d5f816bee56d428b8799aa78d9439a18dc8119a93c751` |
+| Source | Derived from CERN Open Data [record 12102](http://opendata.cern.ch/record/12102), DOI [10.7483/OPENDATA.CMS.JGJX.MS7Q](https://doi.org/10.7483/OPENDATA.CMS.JGJX.MS7Q) |
+| Parent license | CC0-1.0 (confirmed on the record 12102 page) |
+| Download | [10.5281/zenodo.22310265](https://doi.org/10.5281/zenodo.22310265) — see [`data/raw/README.md`](data/raw/README.md) |
 
 Each row is one jet. `isSignal` and `isBackground` are complementary labels. `Unnamed: 0` is an export index, **not** a unique event ID (134,604 distinct values in 225,868 rows), so splits are stratified by label only.
 
 102 rows have `tau_vertexEnergyRatio_{0,1} = -1` on both columns. Those values are treated as missing: a binary indicator plus a median imputed from **training** non-sentinel values. The effect on logistic-regression validation AUC is small (0.8583 raw vs 0.8586 handled).
 
-The table is a **derived extract** of CMS Open Data, not the full sample:
-
-Duarte, J. (2019). *Sample with jet, track and secondary vertex properties for Hbb tagging ML studies*. CERN Open Data Portal. [DOI: 10.7483/OPENDATA.CMS.JGJX.MS7Q](https://doi.org/10.7483/OPENDATA.CMS.JGJX.MS7Q) ([record 12102](http://opendata.cern.ch/record/12102)).
-
-The published record is ~228 GiB of ROOT files. This repo does not rebuild the CSV from those files. Copy `cms_Hbb.csv` into `data/raw/` and check the hash. Details: [`data/raw/README.md`](data/raw/README.md).
+The published CERN record is ~228 GiB of ROOT files. This repo does not rebuild the CSV from those files. Download `cms_Hbb.csv` from Zenodo ([10.5281/zenodo.22310265](https://doi.org/10.5281/zenodo.22310265)) and run `python -m scripts.prepare_data`. Details: [`data/raw/README.md`](data/raw/README.md).
 
 ## Quickstart
 
@@ -56,11 +55,12 @@ pip install -e .
 On macOS/Linux, activate with `source .venv/bin/activate`.
 
 ```bash
-python -m scripts.prepare_data --source "C:\path\to\cms_Hbb.csv"
-python -m scripts.train
+curl -L -o data/raw/cms_Hbb.csv "https://zenodo.org/records/22310265/files/cms_Hbb.csv"
+python -m scripts.prepare_data --source data/raw/cms_Hbb.csv
+python -m scripts.train --config configs/default.yaml
 ```
 
-This writes `artifacts/metrics.json` and `artifacts/figures/`. Random Forest is the slow step; skip it with `--skip-random-forest`.
+This writes `artifacts/metrics.json` and `artifacts/figures/`. Random Forest is the slow step; skip it with `--skip-random-forest`. Seed, split fractions, and paths live in `configs/default.yaml`.
 
 To reproduce the original notebook numbers (balanced test set, known leakage):
 
@@ -73,9 +73,21 @@ python -m scripts.train --legacy --output artifacts/metrics_legacy.json
 ```text
 src/hbb_classification/   data checks, P1 experiment, legacy notebook pipeline
 scripts/                  python -m entry points
+configs/                  default seed, split, and paths
+tests/                    schema, leakage, Punzi, and smoke tests on a toy table
 data/raw/                 cms_Hbb.csv (gitignored) and data instructions
 artifacts/                metrics.json and figures from a local run
 reports/original/         course notebook and PDF, frozen
+.github/workflows/        CI: ruff + pytest (no 105 MB download)
+```
+
+## Tests
+
+CI never fetches `cms_Hbb.csv`. Tests build a 60-row table with the same columns and label rules.
+
+```bash
+pip install -e ".[dev]"
+pytest
 ```
 
 ## Method (P1)
@@ -104,9 +116,17 @@ reports/original/         course notebook and PDF, frozen
 
 The submitted notebook and PDF are in [`reports/original/`](reports/original/). That analysis undersampled before splitting, fit PCA on the full balanced matrix, and chose the Punzi threshold on the test set. Use `--legacy` if you need those numbers.
 
+## Citation
+
+Cite this repository (`CITATION.cff`), the derived table, and the parent Open Data record:
+
+- Kaluiji, J. (2026). *cms_Hbb: Derived High-Level Feature Table for H→bb̄ vs QCD Jet Tagging*. Zenodo. [DOI: 10.5281/zenodo.22310265](https://doi.org/10.5281/zenodo.22310265).
+- Duarte, J. (2019). *Sample with jet, track and secondary vertex properties for Hbb tagging ML studies*. CERN Open Data Portal. [DOI: 10.7483/OPENDATA.CMS.JGJX.MS7Q](https://doi.org/10.7483/OPENDATA.CMS.JGJX.MS7Q).
+
 ## Environment
 
 - Python `>=3.11,<3.13`
-- `pandas`, `numpy<2`, `matplotlib`, `seaborn`, `scikit-learn>=1.3,<1.4`
+- `pandas`, `numpy<2`, `matplotlib`, `seaborn`, `scikit-learn>=1.3,<1.4`, `pyyaml`
+- Dev extras: `pytest`, `ruff`
 
 See `pyproject.toml`.

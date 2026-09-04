@@ -1,0 +1,50 @@
+cff-version: 1.2.0
+message: If you use this software or the derived cms_Hbb table, please cite this repository, the Zenodo extract, and the parent CERN Open Data record.
+title: Jet Classification in Higgs Boson Decays at the LHC
+type: software
+authors:
+  - family-names: Kaluiji
+    given-names: John
+    email: kaluij1@stolaf.edu
+    alias: kaluij1
+repository-code: https://github.com/kaluij1/Jet-Classification-in-Higgs-Boson-Decays-at-the-LHC
+abstract: >-
+  Reproducible H→bb̄ versus QCD jet classification on a derived high-level
+  feature table extracted from CERN Open Data record 12102 (HiggsToBBNTuple).
+keywords:
+  - CMS
+  - LHC
+  - Higgs boson
+  - jet tagging
+  - machine learning
+references:
+  - type: data
+    title: >-
+      Sample with jet, track and secondary vertex properties for Hbb tagging
+      ML studies (HiggsToBBNTuple_HiggsToBB_QCD_RunII_13TeV_MC)
+    authors:
+      - family-names: Duarte
+        given-names: Javier
+    year: 2019
+    publisher:
+      name: CERN Open Data Portal
+    doi: 10.7483/OPENDATA.CMS.JGJX.MS7Q
+    license: CC0-1.0
+    notes: Parent ROOT sample. This repository uses a derived CSV extract.
+  - type: data
+    title: >-
+      cms_Hbb: Derived High-Level Feature Table for H→bb̄ vs QCD Jet Tagging
+      (from CERN Open Data record 12102)
+    authors:
+      - family-names: Kaluiji
+        given-names: John
+    year: 2026
+    month: 9
+    publisher:
+      name: Zenodo
+    doi: 10.5281/zenodo.22310265
+    license: CC-BY-4.0
+    url: https://doi.org/10.5281/zenodo.22310265
+    notes: >-
+      Version DOI 10.5281/zenodo.22310265 (v2, cms_Hbb.csv).
+      Concept DOI 10.5281/zenodo.22310118.
